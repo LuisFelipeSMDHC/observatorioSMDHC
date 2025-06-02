@@ -6,7 +6,16 @@ import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { point } from '@turf/helpers';
 import area from '@turf/area';
 import center from '@turf/center';
-import regioesData from '../../assets/DivisoesAdministrativasSP.json';
+
+// Dynamic import for large GeoJSON data
+let regioesDataCache: any = null;
+const loadRegioesData = async (): Promise<any> => {
+  if (!regioesDataCache) {
+    const module = await import('../../assets/DivisoesAdministrativasSP.json');
+    regioesDataCache = module.default;
+  }
+  return regioesDataCache;
+};
 
 // Types
 import type { Parceria, FilterType } from '../../types';
@@ -87,15 +96,15 @@ export default defineComponent({
                     layer.bindPopup(popup);
                 }
             });
-        };/**
+        };        /**
          * Counts partnerships by administrative division
          */
-        const countParceriasByDivision = (division: string, criteria: string, density: boolean) => {
+        const countParceriasByDivision = async (division: string, criteria: string, density: boolean) => {
             const filtered = getFilteredParcerias();
-            const regioes = regioesData as FeatureCollection;
+            const regioes = await loadRegioesData();
             const features = division === 'regioes'
                 ? regioes.features
-                : extractFeatures(regioes, division);            const counts: Record<string, number> = {};
+                : extractFeatures(regioes, division);const counts: Record<string, number> = {};
 
             filtered.forEach(p => {
                 // Handle projects with multiple addresses
@@ -124,11 +133,9 @@ export default defineComponent({
                         }
                     }
                 });
-            });
-
-            // Apply density calculation if requested
+            });            // Apply density calculation if requested
             if (density) {
-                features.forEach(feature => {
+                features.forEach((feature: any) => {
                     const name = feature.properties?.nome;
                     if (name && counts[name]) {
                         const featureArea = area(feature) / 1000000; // Convert to km²
@@ -207,11 +214,8 @@ export default defineComponent({
                 interactive: false, // Non-interactive to avoid interfering with map clicks
                 zIndexOffset: 1000 // Keep above other layers
             });
-        };
-
-
-        const createChoroplethLayer = (division: string) => {
-            const regioes = regioesData as FeatureCollection;
+        };        const createChoroplethLayer = async (division: string) => {
+            const regioes = await loadRegioesData();
             const extractedFeatures = division === 'regioes'
                 ? regioes
                 : { ...regioes, features: extractFeatures(regioes, division) };
@@ -221,7 +225,7 @@ export default defineComponent({
                 ? regioes.features 
                 : extractFeatures(regioes, division);
                 
-            const counts = countParceriasByDivision(division, colorCriteria, densityCriteria);
+            const counts = await countParceriasByDivision(division, colorCriteria, densityCriteria);
             // Store counts for reusing when recreating markers
             featureCounts = counts;
             
@@ -357,12 +361,12 @@ export default defineComponent({
                     }
                 }
             });
-        };        const showLayer = (division: string) => {
+        };        const showLayer = async (division: string) => {
             if (!props.map) return;
             
             clearLayers();
             if (currentVisualization === 'coropletico') {
-                const choroplethLayer = createChoroplethLayer(division);
+                const choroplethLayer = await createChoroplethLayer(division);
                 choroplethLayer.addTo(props.map);
                 (props.map as any)._choroplethLayer = choroplethLayer;
                 
@@ -379,37 +383,38 @@ export default defineComponent({
                     }
                 }
             }
-        };
-
-        const initializeGeoJsonLayers = () => {
+        };        const initializeGeoJsonLayers = async () => {
             if (!props.map) return;
-            const regioes = regioesData as FeatureCollection;
+            const regioes = await loadRegioesData();
 
             layers = {
                 regioes: createSimpleGeoJsonLayer(extractFeatures(regioes, 'regioes')),
                 subprefeituras: createSimpleGeoJsonLayer(extractFeatures(regioes, 'subprefeituras')),
-                distritos: createSimpleGeoJsonLayer(extractFeatures(regioes, 'distritos'))
-            };
+                distritos: createSimpleGeoJsonLayer(extractFeatures(regioes, 'distritos'))        };
             currentDivision = 'regioes';
-            showLayer(currentDivision);
-        };        const handleDivisionChange = (division: string) => {
-            currentDivision = division;
-            
-            showLayer(division);
-        };        const handleVisualizationChange = (visualization: string) => {
-            currentVisualization = visualization;
-            
-            showLayer(currentDivision);
+            await showLayer(currentDivision);
         };
 
-        const handleCriteriaChange = (criteria: { color: string, density: boolean, showValueMarkers?: boolean }) => {
+        const handleDivisionChange = async (division: string) => {
+            currentDivision = division;
+            
+            await showLayer(division);
+        };
+
+        const handleVisualizationChange = async (visualization: string) => {
+            currentVisualization = visualization;
+            
+            await showLayer(currentDivision);
+        };
+
+        const handleCriteriaChange = async (criteria: { color: string, density: boolean, showValueMarkers?: boolean }) => {
             colorCriteria = criteria.color;
             densityCriteria = criteria.density;
             if (criteria.showValueMarkers !== undefined) {
                 showValueMarkers = criteria.showValueMarkers;
             }
             if (currentVisualization === 'coropletico') {
-                showLayer(currentDivision);
+                await showLayer(currentDivision);
             }
         };
 
@@ -447,17 +452,15 @@ export default defineComponent({
                     }
                 }, 50);
             }
-        };
-
-        onMounted(() => {
+        };        onMounted(async () => {
             if (props.map) {
-                initializeGeoJsonLayers();
+                await initializeGeoJsonLayers();
                 
                 // Add zoom event listeners for value markers and popup management
                 props.map.on('zoomstart', handleZoomStart);
                 props.map.on('zoomend', handleZoomEnd);
             }
-        });        onBeforeUnmount(() => {
+        });onBeforeUnmount(() => {
             if (props.map) {
                 // Clean up event listeners when component is unmounted
                 props.map.off('zoomstart', handleZoomStart);
@@ -477,17 +480,15 @@ export default defineComponent({
                 newMap.on('zoomstart', handleZoomStart);
                 newMap.on('zoomend', handleZoomEnd);
             }
-        });
-
-        watch(
+        });        watch(
             () => [props.appliedFilters, props.parcerias],
-            () => {
+            async () => {
                 if (currentVisualization === 'coropletico') {
-                    showLayer(currentDivision);
+                    await showLayer(currentDivision);
                 }
             },
             { deep: true }
-        );        return {};
+        );return {};
     }
 });
 </script>

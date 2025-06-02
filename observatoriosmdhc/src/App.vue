@@ -18,12 +18,14 @@
 
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted } from 'vue'
-import Map from './components/Map.vue'
+import { onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import Home from './components/Home.vue'
 import Footer from './components/Footer.vue'
-import Project from './components/Project.vue'
 import { useNavigation } from './composables/useNavigation'
+
+// Lazy load heavy components
+const Map = defineAsyncComponent(() => import('./components/Map.vue'))
+const Project = defineAsyncComponent(() => import('./components/Project.vue'))
 
 const { currentPage, setCurrentPage, scrollToPage, isScrollingGlobal } = useNavigation()
 let lastWheelTime = 0
@@ -97,17 +99,6 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-.fixed-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('/src/assets/background.jpg') no-repeat center center;
-  background-size: cover;
-  z-index: 0;
-}
-
 .page-container {
     height: 400vh;
     width: 100%;
@@ -119,5 +110,16 @@ onUnmounted(() => {
     width: 100%;
     height: 100vh;
     position: relative;
+}
+
+.fixed-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/src/assets/background.jpg') no-repeat center center;
+  background-size: cover;
+  z-index: 0;
 }
 </style>

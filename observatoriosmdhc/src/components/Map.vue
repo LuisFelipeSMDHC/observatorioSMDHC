@@ -49,17 +49,27 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import Filters from './map-components/Filters.vue';
-import Points from './map-components/Points.vue';
-import Visualization from './map-components/Visualization.vue';
-import Geojson from './map-components/Geojson.vue';
-import Keys from './map-components/Keys.vue';
+// Lazy load map components to reduce initial bundle size
+const Filters = defineAsyncComponent(() => import('./map-components/Filters.vue'));
+const Points = defineAsyncComponent(() => import('./map-components/Points.vue'));
+const Visualization = defineAsyncComponent(() => import('./map-components/Visualization.vue'));
+const Geojson = defineAsyncComponent(() => import('./map-components/Geojson.vue'));
+const Keys = defineAsyncComponent(() => import('./map-components/Keys.vue'));
 
-import parcerias from '../assets/parcerias.json';
+// Dynamic import for large JSON data
+let parceriasData: any = null;
+const loadParceriasData = async (): Promise<any> => {
+  if (!parceriasData) {
+    const module = await import('../assets/parcerias.json');
+    parceriasData = module.default;
+  }
+  return parceriasData;
+};
+
 import type { Parceria, Filter, RangeFilter, FilterType, VisualizationCriteria } from '../types';
 import { MAP_CONFIG, FILTER_CATEGORIES, RANGE_FILTER_CATEGORIES } from '../types';
 
@@ -70,17 +80,19 @@ export default defineComponent({
     Points,
     Visualization,
     Geojson,
-    Keys
-  },  data() {
+    Keys  },  
+  data() {
     return {
       map: null as any,
       appliedFilters: [] as FilterType[],
       categories: FILTER_CATEGORIES,
       rangeCategories: RANGE_FILTER_CATEGORIES,
-      parcerias: parcerias as Parceria[],
+      parcerias: [] as Parceria[],
     };
   },
-  mounted() {
+  async mounted() {
+    // Load data asynchronously
+    this.parcerias = await loadParceriasData();
     this.initializeMap();
   },
   methods: {
