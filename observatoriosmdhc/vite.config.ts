@@ -51,7 +51,7 @@ export default defineConfig({
       }
     },
     // Set higher chunk size warning for geographic data (15MB to accommodate the 12MB GeoJSON)
-    chunkSizeWarningLimit: 15000,
+    chunkSizeWarningLimit: 500,
     // Optimize asset handling - smaller inline limit to reduce initial bundle
     assetsInlineLimit: 2048, // Inline assets smaller than 2KB
     // Enable compression

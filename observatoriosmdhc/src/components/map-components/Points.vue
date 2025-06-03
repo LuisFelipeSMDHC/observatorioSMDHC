@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, onMounted, watch, onBeforeUnmount } from 'vue';
-import L, { Map, LayerGroup } from 'leaflet';
+import * as L from 'leaflet';
 import { useNavigation } from '../../composables/useNavigation';
 
 // Types
@@ -10,22 +10,20 @@ import type { Parceria, FilterType, Endereco } from '../../types';
 import { filterParcerias, generateColorPalette, calculateMarkerRadius, formatNumber } from '../../utils/dataHelpers';
 
 export default defineComponent({
-    name: 'Points',
-    props: {
+    name: 'Points',    props: {
         parcerias: Array as () => Parceria[],
         appliedFilters: Array as () => FilterType[],
-        map: Object as () => Map | null
-    },    setup(props) {        const { navigateToProject } = useNavigation();
-        
-        let layerGroup: LayerGroup;
+        map: Object as () => any
+    },setup(props) {        const { navigateToProject } = useNavigation();
+          let layerGroup: any;
 
         let colorCriteria = 'osc';
         let sizeCriteria = 'verba';
         let currentVisualization = 'pontos';
 
         // Popup handling during zoom events
-        let openPopup: L.Popup | null = null;
-        let popupLatLng: L.LatLng | null = null;
+        let openPopup: any = null;
+        let popupLatLng: any = null;
 
         const handleZoomStart = () => {
             // Store and close any open popup to prevent positioning issues

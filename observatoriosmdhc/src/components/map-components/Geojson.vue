@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, onMounted, watch, onBeforeUnmount } from 'vue';
-import L, { Map as LeafletMap, LayerGroup, GeoJSON, Marker } from 'leaflet';
+import * as L from 'leaflet';
 import type { FeatureCollection, Feature } from 'geojson';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { point } from '@turf/helpers';
@@ -24,10 +24,8 @@ import type { Parceria, FilterType } from '../../types';
 import { filterParcerias, formatNumber } from '../../utils/dataHelpers';
 
 export default defineComponent({
-    name: 'Geojson',
-    props: {
-        map: {
-            type: Object as () => LeafletMap | null,
+    name: 'Geojson',    props: {        map: {
+            type: Object as () => any,
             required: true
         },
         parcerias: {
@@ -39,16 +37,15 @@ export default defineComponent({
         },
     },
     emits: ['division-change', 'criteria-change', 'visualization-change', 'feature-counts-update'],
-    setup(props, { expose, emit }) {
-        let layers: Record<string, GeoJSON | LayerGroup> = {};
+    setup(props, { expose, emit }) {        let layers: Record<string, any> = {};
         let currentDivision = 'regioes';
         let currentVisualization = 'pontos';
         let colorCriteria = 'amount';
         let densityCriteria = false;
         let showValueMarkers = false;
-        let valueMarkers: Marker[] = [];
+        let valueMarkers: any[] = [];
         let featureCounts: Record<string, number> = {};
-        let features: Feature[] = [];        /**
+        let features: Feature[] = [];/**
          * Gets filtered partnerships based on applied filters
          */
         const getFilteredParcerias = () => {
@@ -375,10 +372,9 @@ export default defineComponent({
             } else {
                 const layer = layers[division];
                 if (layer) {
-                    layer.addTo(props.map);
-                    if ('eachLayer' in layer) {
-                        layer.eachLayer(l => {
-                            if ('bringToBack' in l) (l as L.Path).bringToBack();
+                    layer.addTo(props.map);                    if ('eachLayer' in layer) {
+                        layer.eachLayer((l: any) => {
+                            if ('bringToBack' in l) (l as any).bringToBack();
                         });
                     }
                 }

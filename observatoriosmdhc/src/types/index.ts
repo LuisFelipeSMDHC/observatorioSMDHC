@@ -55,7 +55,7 @@ export const MAP_CONFIG = {
   ] as [number, number][],
   DEFAULT_ZOOM: 10,
   MIN_ZOOM: 10,
-  MAX_ZOOM: 19,
+  MAX_ZOOM: 20,
   TILE_URL: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png'
 } as const;
 

@@ -19,14 +19,21 @@
       @division-change="handleDivisionChange"
       @visualization-change="handleVisualizationChange"
     />
-    
-    <!-- Points layer -->
+      <!-- Points layer -->
     <Points
       ref="pointsRef"
       :map="map"
       :parcerias="parcerias"
       :applied-filters="appliedFilters"
       @visualization-change="handleVisualizationChange"
+    />
+    
+    <!-- Heatmap layer -->
+    <Heatmap
+      ref="heatmapRef"
+      :map="map"
+      :parcerias="parcerias"
+      :applied-filters="appliedFilters"
     />
     
     <!-- GeoJSON layer -->
@@ -50,12 +57,13 @@
 
 <script lang="ts">
 import { defineComponent, defineAsyncComponent } from 'vue';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Lazy load map components to reduce initial bundle size
 const Filters = defineAsyncComponent(() => import('./map-components/Filters.vue'));
 const Points = defineAsyncComponent(() => import('./map-components/Points.vue'));
+const Heatmap = defineAsyncComponent(() => import('./map-components/Heatmap.vue'));
 const Visualization = defineAsyncComponent(() => import('./map-components/Visualization.vue'));
 const Geojson = defineAsyncComponent(() => import('./map-components/Geojson.vue'));
 const Keys = defineAsyncComponent(() => import('./map-components/Keys.vue'));
@@ -74,14 +82,13 @@ import type { Parceria, Filter, RangeFilter, FilterType, VisualizationCriteria }
 import { MAP_CONFIG, FILTER_CATEGORIES, RANGE_FILTER_CATEGORIES } from '../types';
 
 export default defineComponent({
-  name: 'Map',
-  components: {
+  name: 'Map',  components: {
     Filters,
     Points,
+    Heatmap,
     Visualization,
     Geojson,
-    Keys  },  
-  data() {
+    Keys  },  data() {
     return {
       map: null as any,
       appliedFilters: [] as FilterType[],
@@ -152,14 +159,12 @@ export default defineComponent({
       this.appliedFilters = this.appliedFilters.filter(
         f => !('type' in f && f.type === 'range' && f.category === filter.category)
       );
-    },
-
-    /**
+    },    /**
      * Handle visualization criteria changes
      */
     handleCriteriaChange(criteria: VisualizationCriteria) {
       // Propagate to child components
-      const refs = [this.$refs.pointsRef, this.$refs.geojsonRef, this.$refs.keysRef];
+      const refs = [this.$refs.pointsRef, this.$refs.heatmapRef, this.$refs.geojsonRef, this.$refs.keysRef];
       refs.forEach(ref => {
         if (ref && typeof (ref as any).handleCriteriaChange === 'function') {
           (ref as any).handleCriteriaChange(criteria);
@@ -177,13 +182,11 @@ export default defineComponent({
           (ref as any).handleDivisionChange(division);
         }
       });
-    },
-
-    /**
+    },    /**
      * Handle visualization type changes
      */
     handleVisualizationChange(visualization: string) {
-      const refs = [this.$refs.pointsRef, this.$refs.geojsonRef, this.$refs.keysRef];
+      const refs = [this.$refs.pointsRef, this.$refs.heatmapRef, this.$refs.geojsonRef, this.$refs.keysRef];
       refs.forEach(ref => {
         if (ref && typeof (ref as any).handleVisualizationChange === 'function') {
           (ref as any).handleVisualizationChange(visualization);

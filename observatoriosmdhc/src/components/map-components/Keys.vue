@@ -56,6 +56,27 @@
                                     <span class="color-label">Todos os pontos</span>
                                 </div>
                             </div>
+                        </div>                    </div>
+
+                    <!-- Legenda para heatmap -->
+                    <div v-if="currentVisualization === 'heatmap'" class="legend-section">
+                        <h3>Mapa de Calor</h3>
+                        <p>Intensidade baseada em: {{ getHeatmapCriteriaLabel() }}</p>
+                        
+                        <div class="heatmap-gradient">
+                            <div class="gradient-container">
+                                <div class="gradient-bar" :style="{ background: getHeatmapGradientBackground() }"></div>
+                            </div>
+                            <div class="gradient-labels">
+                                <span>Baixa</span>
+                                <span>Média</span>
+                                <span>Alta</span>
+                            </div>
+                            <div class="heatmap-info">
+                                <p>Cada ponto representa uma localização de projeto</p>
+                                <p v-if="colorCriteria === 'verba'">A intensidade da cor indica o valor da verba</p>
+                                <p v-else>A intensidade da cor indica a densidade de projetos</p>
+                            </div>
                         </div>
                     </div>
 
@@ -93,7 +114,6 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
-import { Map as LeafletMap } from 'leaflet';
 
 // Types
 import type { Parceria, FilterType } from '../../types';
@@ -104,9 +124,8 @@ import { filterParcerias, generateColorPalette, getUniqueValues, formatNumber } 
 
 export default defineComponent({
     name: 'Keys',
-    props: {
-        map: {
-            type: Object as () => LeafletMap | null,
+    props: {        map: {
+            type: Object as () => any,
             required: true
         },
         parcerias: {
@@ -182,11 +201,18 @@ export default defineComponent({
         const updateFeatureCounts = (counts: Record<string, number>) => {
             featureCounts.value = counts;
             updateChoroplethValues();
+        };        const getGradientBackground = () => {
+            return 'linear-gradient(to right, rgb(220, 240, 255), rgb(180, 215, 255), rgb(120, 180, 240), rgb(70, 150, 220), rgb(40, 120, 205))';
+        };        const getHeatmapGradientBackground = () => {
+            return 'linear-gradient(to right, #000080, #0000FF, #00BFFF, #00FFFF, #00FF80, #80FF00, #FFFF00, #FF8000, #FF4000, #FF0000, #800000)';
         };
 
-        const getGradientBackground = () => {
-            return 'linear-gradient(to right, rgb(220, 240, 255), rgb(180, 215, 255), rgb(120, 180, 240), rgb(70, 150, 220), rgb(40, 120, 205))';
-        };        const getReadableCriteria = (criteria: string) => {
+        const getHeatmapCriteriaLabel = () => {
+            if (colorCriteria.value === 'verba') {
+                return 'Valor da verba';
+            }
+            return 'Densidade de projetos';
+        };const getReadableCriteria = (criteria: string) => {
             const criteriaMap: Record<string, string> = {
                 'osc': CATEGORY_LABELS['osc'] || 'OSC',
                 'nome': CATEGORY_LABELS['nome'] || 'Nome',
@@ -285,12 +311,13 @@ export default defineComponent({
             maxValue,
             firstValue,
             middleValue,
-            thirdValue,
-            togglePin,
+            thirdValue,            togglePin,
             getReadableCriteria,
             getDivisionLabel,
             getColorCriteriaLabel,
             getGradientBackground,
+            getHeatmapGradientBackground,
+            getHeatmapCriteriaLabel,
             handleVisualizationChange,
             handleCriteriaChange,
             handleDivisionChange,
@@ -489,6 +516,21 @@ export default defineComponent({
 
 .choropleth-gradient {
     margin-top: 14px;
+}
+
+.heatmap-gradient {
+    margin-top: 14px;
+}
+
+.heatmap-info {
+    margin-top: 11px;
+}
+
+.heatmap-info p {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 4px 0;
+    line-height: 1.4;
 }
 
 .gradient-bar {

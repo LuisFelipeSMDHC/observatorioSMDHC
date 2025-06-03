@@ -130,7 +130,6 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
-import { Map } from 'leaflet';
 
 // Types
 import type { VisualizationType, VisualizationCriteria, DivisionType } from '../../types';
@@ -148,7 +147,7 @@ interface ColorOption {
  * Props interface for the Visualization component
  */
 interface VisualizationProps {
-    map: Map | null;
+    map: any;
     onCriteriaChange: (criteria: VisualizationCriteria) => void;
     onDivisionChange: (division: DivisionType) => void;
     onVisualizationChange?: (visualization: VisualizationType) => void;
@@ -156,9 +155,8 @@ interface VisualizationProps {
 
 export default defineComponent({
     name: 'Visualization',
-    props: {
-        map: {
-            type: Object as () => Map | null,
+    props: {        map: {
+            type: Object as () => any,
             default: null
         },
         onCriteriaChange: {
@@ -197,7 +195,13 @@ export default defineComponent({
                     { value: 'verba', label: 'Verba' },
                     { value: 'amount', label: 'Quantidade' },
                     { value: 'none', label: 'Nenhum' }
-                ];            } else if (visualization.value === 'pontos') {
+                ];
+            } else if (visualization.value === 'heatmap') {
+                return [
+                    { value: 'verba', label: 'Verba' },
+                    { value: 'count', label: 'Densidade' }
+                ];
+            } else if (visualization.value === 'pontos') {
                 return [
                     { value: 'osc', label: CATEGORY_LABELS['osc'] || 'OSC' },
                     { value: 'unidadeGestora', label: CATEGORY_LABELS['unidadeGestora'] || 'Unidade Gestora' },
@@ -214,10 +218,12 @@ export default defineComponent({
          * Sets appropriate default values for color and size based on visualization type
          */
         const handleVisualizationChange = (): void => {
-            props.onVisualizationChange?.(visualization.value);
-              // Set default criteria based on visualization type
+            props.onVisualizationChange?.(visualization.value);            // Set default criteria based on visualization type
             if (visualization.value === 'coropletico') {
                 color.value = 'amount';
+                size.value = 'none';
+            } else if (visualization.value === 'heatmap') {
+                color.value = 'verba';
                 size.value = 'none';
             } else if (visualization.value === 'pontos') {
                 color.value = 'osc';

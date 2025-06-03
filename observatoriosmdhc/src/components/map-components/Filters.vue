@@ -183,7 +183,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch, onMounted, reactive } from 'vue';
-import L, { Map as LeafletMap } from 'leaflet';
+import * as L from 'leaflet';
 
 // Types
 import type { Filter, Parceria, RangeFilter } from '../../types';
@@ -196,9 +196,9 @@ export default defineComponent({
     name: 'Filters',
     props: {
         map: {
-            type: Object as () => LeafletMap | null,
+            type: Object as () => any,
             required: true
-        },        categories: {
+        },categories: {
             type: Array as () => string[],
             required: true
         },        
