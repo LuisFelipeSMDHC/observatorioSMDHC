@@ -313,21 +313,34 @@ export default defineComponent({
             });
             
             return layer;
-        };
-
-        const clearLayers = () => {
+        };        const clearLayers = () => {
             if (!props.map) return;
+            
+            // Clear value markers first
+            clearValueMarkers();
+            
+            // Remove all simple geojson layers
             Object.values(layers).forEach(layer => {
-                if (props.map!.hasLayer(layer)) {
+                if (layer && props.map!.hasLayer(layer)) {
                     props.map!.removeLayer(layer);
                 }
             });
+            
+            // Remove choropleth layer if it exists - with more thorough cleanup
             if ((props.map as any)._choroplethLayer) {
-                props.map.removeLayer((props.map as any)._choroplethLayer);
+                const choroplethLayer = (props.map as any)._choroplethLayer;
+                if (props.map.hasLayer(choroplethLayer)) {
+                    props.map.removeLayer(choroplethLayer);
+                }
                 (props.map as any)._choroplethLayer = null;
             }
             
-            clearValueMarkers();
+            // Additional cleanup - remove any remaining GeoJSON layers that might be lingering
+            props.map.eachLayer((layer: any) => {
+                if (layer.feature || (layer.options && layer.options.style)) {
+                    props.map!.removeLayer(layer);
+                }
+            });
         };
         
         // Separate function to clear value markers
@@ -362,7 +375,9 @@ export default defineComponent({
             if (!props.map) return;
             
             clearLayers();
+            
             if (currentVisualization === 'coropletico') {
+                // Only show choropleth layer when visualization mode is 'coropletico'
                 const choroplethLayer = await createChoroplethLayer(division);
                 choroplethLayer.addTo(props.map);
                 (props.map as any)._choroplethLayer = choroplethLayer;
@@ -370,16 +385,22 @@ export default defineComponent({
                 // Emitir evento com as contagens de características para o componente Keys
                 emit('feature-counts-update', featureCounts);
             } else {
+                // For other visualization modes (pontos, heatmap), show simple geojson layer with boundaries only
                 const layer = layers[division];
                 if (layer) {
-                    layer.addTo(props.map);                    if ('eachLayer' in layer) {
+                    layer.addTo(props.map);
+                    if ('eachLayer' in layer) {
                         layer.eachLayer((l: any) => {
                             if ('bringToBack' in l) (l as any).bringToBack();
                         });
                     }
                 }
+                
+                // Clear feature counts when not in choropleth mode
+                featureCounts = {};
+                emit('feature-counts-update', featureCounts);
             }
-        };        const initializeGeoJsonLayers = async () => {
+        };const initializeGeoJsonLayers = async () => {
             if (!props.map) return;
             const regioes = await loadRegioesData();
 
@@ -395,11 +416,14 @@ export default defineComponent({
             currentDivision = division;
             
             await showLayer(division);
-        };
-
-        const handleVisualizationChange = async (visualization: string) => {
+        };        const handleVisualizationChange = async (visualization: string) => {
+            // Force clear all layers before changing visualization mode
+            clearLayers();
+            
+            // Update current visualization
             currentVisualization = visualization;
             
+            // Show the appropriate layer for the new visualization mode
             await showLayer(currentDivision);
         };
 
