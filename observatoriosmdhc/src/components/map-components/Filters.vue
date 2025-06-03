@@ -190,7 +190,7 @@ import type { Filter, Parceria, RangeFilter } from '../../types';
 import { CATEGORY_LABELS } from '../../types';
 
 // Utils
-import { getUniqueValues, getVerbaRange, getDateRange, formatCurrency, formatDate } from '../../utils/dataHelpers';
+import { getUniqueValues, getVerbaRange, getDateRange, formatCurrency, formatDate, filterParcerias } from '../../utils/dataHelpers';
 
 export default defineComponent({
     name: 'Filters',
@@ -215,6 +215,7 @@ export default defineComponent({
     setup(props, { emit }) {        const showFiltersTab = ref(false);
         const appliedFilters = ref<Filter[]>([]);
         const appliedRangeFilters = ref<RangeFilter[]>([]);
+
         const isPinned = ref(true);
 
         const searchTexts = ref<Record<string, string>>({});
@@ -223,6 +224,108 @@ export default defineComponent({
         
         // Range filter states
         const rangeFilters = reactive<Record<string, { min: number; max: number; currentMin: number; currentMax: number }>>({});
+          /**
+         * Updates range filter bounds based on the current filtered dataset
+         */
+        const updateRangeFilterBounds = () => {
+            // Get the current dataset based on applied categorical filters
+            const categoricalFilters = appliedFilters.value;
+            const filteredParcerias = categoricalFilters.length > 0 
+                ? filterParcerias(props.parcerias, categoricalFilters)
+                : props.parcerias;
+            
+            props.rangeCategories.forEach(category => {
+                if (category === 'verba') {
+                    const range = getVerbaRange(filteredParcerias);
+                    const currentRange = rangeFilters[category];
+                    
+                    // Only update bounds if they've changed significantly
+                    if (currentRange && (
+                        Math.abs(currentRange.min - range.min) > 1000 ||
+                        Math.abs(currentRange.max - range.max) > 1000
+                    )) {
+                        // Check if current values are at extremes
+                        const isCurrentMinAtExtreme = currentRange.currentMin === currentRange.min;
+                        const isCurrentMaxAtExtreme = currentRange.currentMax === currentRange.max;
+                        
+                        // Calculate new current values
+                        let newCurrentMin = currentRange.currentMin;
+                        let newCurrentMax = currentRange.currentMax;
+                        
+                        // If at extreme positions, move to new extremes
+                        if (isCurrentMinAtExtreme) {
+                            newCurrentMin = range.min;
+                        } else {
+                            // Otherwise preserve current value if within new range
+                            newCurrentMin = Math.max(range.min, Math.min(currentRange.currentMin, range.max));
+                        }
+                        
+                        if (isCurrentMaxAtExtreme) {
+                            newCurrentMax = range.max;
+                        } else {
+                            // Otherwise preserve current value if within new range
+                            newCurrentMax = Math.min(range.max, Math.max(currentRange.currentMax, range.min));
+                        }
+                        
+                        rangeFilters[category] = {
+                            min: range.min,
+                            max: range.max,
+                            currentMin: newCurrentMin,
+                            currentMax: newCurrentMax
+                        };
+                        
+                        // Reapply range filter if it was active
+                        if (appliedRangeFilters.value.some(f => f.category === category)) {
+                            applyRangeFilter(category);
+                        }
+                    }
+                } else if (category === 'data') {
+                    const range = getDateRange(filteredParcerias);
+                    const currentRange = rangeFilters[category];
+                    
+                    // Only update bounds if they've changed
+                    if (currentRange && (
+                        currentRange.min !== range.min ||
+                        currentRange.max !== range.max
+                    )) {
+                        // Check if current values are at extremes
+                        const isCurrentMinAtExtreme = currentRange.currentMin === currentRange.min;
+                        const isCurrentMaxAtExtreme = currentRange.currentMax === currentRange.max;
+                        
+                        // Calculate new current values
+                        let newCurrentMin = currentRange.currentMin;
+                        let newCurrentMax = currentRange.currentMax;
+                        
+                        // If at extreme positions, move to new extremes
+                        if (isCurrentMinAtExtreme) {
+                            newCurrentMin = range.min;
+                        } else {
+                            // Otherwise preserve current value if within new range
+                            newCurrentMin = Math.max(range.min, Math.min(currentRange.currentMin, range.max));
+                        }
+                        
+                        if (isCurrentMaxAtExtreme) {
+                            newCurrentMax = range.max;
+                        } else {
+                            // Otherwise preserve current value if within new range
+                            newCurrentMax = Math.min(range.max, Math.max(currentRange.currentMax, range.min));
+                        }
+                        
+                        rangeFilters[category] = {
+                            min: range.min,
+                            max: range.max,
+                            currentMin: newCurrentMin,
+                            currentMax: newCurrentMax
+                        };
+                        
+                        // Reapply range filter if it was active
+                        if (appliedRangeFilters.value.some(f => f.category === category)) {
+                            applyRangeFilter(category);
+                        }
+                    }
+                }
+            });
+        };
         
         // Initialize categories
         props.categories.forEach(category => {
@@ -252,7 +355,23 @@ export default defineComponent({
                     currentMax: range.max
                 };
             }
-        });
+        });        // Watch for changes in categorical filters to update range bounds
+        watch(
+            () => appliedFilters.value,
+            () => {
+                updateRangeFilterBounds();
+            },
+            { deep: true }
+        );
+
+        // Also watch for changes in the underlying dataset
+        watch(
+            () => props.parcerias,
+            () => {
+                updateRangeFilterBounds();
+            },
+            { deep: true }
+        );
 
         const togglePin = () => {
             isPinned.value = !isPinned.value;
@@ -308,15 +427,29 @@ export default defineComponent({
                 const removed = appliedFilters.value.splice(idx, 1)[0];
                 emit('remove-filter', removed);
             }
-        };
-
-        /**
+        };        /**
          * Applies a range filter
          */
         const applyRangeFilter = (category: string) => {
             const range = rangeFilters[category];
             if (!range) return;
             
+            // Check if the range is at extremes (no filtering needed)
+            const isAtExtremes = range.currentMin === range.min && range.currentMax === range.max;
+            
+            // Remove existing range filter for this category
+            const existingIndex = appliedRangeFilters.value.findIndex(f => f.category === category);
+            
+            if (isAtExtremes) {
+                // If at extremes, remove the filter if it exists
+                if (existingIndex !== -1) {
+                    const removed = appliedRangeFilters.value.splice(existingIndex, 1)[0];
+                    emit('remove-range-filter', removed);
+                }
+                return;
+            }
+            
+            // Apply the range filter
             const rangeFilter: RangeFilter = {
                 category,
                 type: 'range',
@@ -324,8 +457,6 @@ export default defineComponent({
                 max: range.currentMax
             };
             
-            // Remove existing range filter for this category
-            const existingIndex = appliedRangeFilters.value.findIndex(f => f.category === category);
             if (existingIndex !== -1) {
                 appliedRangeFilters.value.splice(existingIndex, 1);
             }

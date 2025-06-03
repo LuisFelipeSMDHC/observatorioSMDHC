@@ -37,13 +37,14 @@ export function filterParcerias(parcerias: Parceria[], appliedFilters: FilterTyp
       )
     );
   }
-
   // Apply range filters
   if (rangeFilters.length > 0) {
     filtered = filtered.filter(parceria => {
       return rangeFilters.every(filter => {
         if (filter.category === 'verba') {
-          return parceria.verba >= filter.min && parceria.verba <= filter.max;
+          // For cost filtering, compare value per address instead of total value
+          const valuePerAddress = parceria.verba / (parceria.enderecos?.length || 1);
+          return valuePerAddress >= filter.min && valuePerAddress <= filter.max;
         } else if (filter.category === 'data') {
           const inicioDate = new Date(parceria.inicio).getTime();
           const terminoDate = new Date(parceria.termino).getTime();
@@ -116,14 +117,29 @@ export function formatNumber(value: number): string {
 
 /**
  * Gets the min and max values for verba (valor total) in partnerships
+ * For projects with multiple addresses, calculates value per address
  */
 export function getVerbaRange(parcerias: Parceria[]): { min: number; max: number } {
   if (!parcerias.length) return { min: 0, max: 0 };
   
-  const verbas = parcerias.map(p => p.verba).filter(v => v && !isNaN(v));
+  // Calculate value per address for each project
+  const verbas: number[] = [];
+  parcerias.forEach(p => {
+    if (p.verba && !isNaN(p.verba) && p.enderecos && p.enderecos.length > 0) {
+      const valuePerAddress = p.verba / p.enderecos.length;
+      verbas.push(valuePerAddress);
+    }
+  });
+  
+  if (verbas.length === 0) return { min: 0, max: 0 };
+  
+  const maxValue = Math.max(...verbas);
+  // Round up to the nearest million
+  const maxRounded = Math.ceil(maxValue / 1000000) * 1000000;
+  
   return {
     min: 0, // Sempre começar do 0 para permitir filtrar desde valores baixos
-    max: Math.max(...verbas)
+    max: maxRounded
   };
 }
 

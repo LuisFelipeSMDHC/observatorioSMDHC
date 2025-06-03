@@ -75,7 +75,7 @@
                             <div class="heatmap-info">
                                 <p>Cada ponto representa uma localização de projeto</p>
                                 <p v-if="colorCriteria === 'verba'">A intensidade da cor indica o valor total</p>
-                                <p v-else>A intensidade da cor indica a densidade de projetos</p>
+                                <p v-else>A intensidade da cor indica a quantidade de projetos</p>
                             </div>
                         </div>
                     </div>
@@ -211,7 +211,7 @@ export default defineComponent({
             if (colorCriteria.value === 'verba') {
                 return 'Valor da verba';
             }
-            return 'Densidade de projetos';
+            return 'Quantidade de projetos';
         };const getReadableCriteria = (criteria: string) => {
             const criteriaMap: Record<string, string> = {
                 'osc': CATEGORY_LABELS['osc'] || 'OSC',
