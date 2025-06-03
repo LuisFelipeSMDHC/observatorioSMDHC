@@ -92,7 +92,7 @@ export default defineComponent({
                         <span class="popup-label">Categoria:</span>
                         <span class="popup-value">${parceria.categoria}</span>
                     </div>                      <div class="popup-info-row">
-                        <span class="popup-label">Verba:</span>
+                        <span class="popup-label">Valor Total:</span>
                         <span class="popup-value popup-value">R$ ${formatNumber(parceria.verba)}</span>
                     </div>
                     ${multipleAddresses ? `<div class="popup-address-note">*Valor distribuído entre ${parceria.enderecos.length} localizações</div>` : ''}
@@ -346,7 +346,7 @@ export default defineComponent({
     margin-bottom: 8px !important;
     text-align: left !important;
     width: 100% !important;
-    padding-left: 94px !important; /* Alinha com o valor da verba */
+    padding-left: 94px !important; /* Alinha com o valor do valor total */
 }
 
 .popup-action-row {

@@ -74,7 +74,7 @@
                             </div>
                             <div class="heatmap-info">
                                 <p>Cada ponto representa uma localização de projeto</p>
-                                <p v-if="colorCriteria === 'verba'">A intensidade da cor indica o valor da verba</p>
+                                <p v-if="colorCriteria === 'verba'">A intensidade da cor indica o valor total</p>
                                 <p v-else>A intensidade da cor indica a densidade de projetos</p>
                             </div>
                         </div>

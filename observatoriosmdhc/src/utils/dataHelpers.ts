@@ -115,7 +115,7 @@ export function formatNumber(value: number): string {
 }
 
 /**
- * Gets the min and max values for verba (budget) in partnerships
+ * Gets the min and max values for verba (valor total) in partnerships
  */
 export function getVerbaRange(parcerias: Parceria[]): { min: number; max: number } {
   if (!parcerias.length) return { min: 0, max: 0 };

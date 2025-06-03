@@ -70,6 +70,6 @@ export const CATEGORY_LABELS: Record<string, string> = {
   unidadeGestora: 'Unidade Gestora',
   origemRecurso: 'Origem do Recurso',
   categoria: 'Categoria',
-  verba: 'Verba',
+  verba: 'Valor Total',
   data: 'Período'
 };

@@ -60,7 +60,7 @@
                         <label for="sizeCriteria">Tamanho:</label>
                         <div class="select-wrapper">
                             <select id="sizeCriteria" v-model="size" @change="handleCriteriaChange">
-                                <option value="verba">Verba</option>
+                                <option value="verba">Valor Total</option>
                                 <option value="none">Nenhum</option>
                             </select>
                             <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -189,19 +189,18 @@ export default defineComponent({
         /**
          * Computed property that returns color options based on current visualization type
          * @returns Array of color options for the current visualization
-         */        const colorOptions = computed((): ColorOption[] => {
-            if (visualization.value === 'coropletico') {
+         */        const colorOptions = computed((): ColorOption[] => {            if (visualization.value === 'coropletico') {
                 return [
-                    { value: 'verba', label: 'Verba' },
+                    { value: 'verba', label: 'Valor Total' },
                     { value: 'amount', label: 'Quantidade' },
                     { value: 'none', label: 'Nenhum' }
                 ];
             } else if (visualization.value === 'heatmap') {
                 return [
-                    { value: 'verba', label: 'Verba' },
+                    { value: 'verba', label: 'Valor Total' },
                     { value: 'count', label: 'Densidade' }
                 ];
-            } else if (visualization.value === 'pontos') {
+            }else if (visualization.value === 'pontos') {
                 return [
                     { value: 'osc', label: CATEGORY_LABELS['osc'] || 'OSC' },
                     { value: 'unidadeGestora', label: CATEGORY_LABELS['unidadeGestora'] || 'Unidade Gestora' },

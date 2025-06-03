@@ -93,9 +93,8 @@
                   </svg>
                 </div>
                 <h3 class="card-title">Informações Financeiras</h3>
-              </div><div class="card-content">
-                <div class="info-item">
-                  <span class="info-label">Verba</span>
+              </div><div class="card-content">                <div class="info-item">
+                  <span class="info-label">Valor Total</span>
                   <span class="info-value financial-value">{{ formatCurrency(selectedProject.verba) }}</span>
                 </div>
                 <div class="info-item">
