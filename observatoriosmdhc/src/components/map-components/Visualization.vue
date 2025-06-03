@@ -56,7 +56,7 @@
                                 Exibir valores
                             </label>
                         </div>
-                    </div>                      <div class="visualization-row" v-if="visualization !== 'coropletico'">
+                    </div>                    <div class="visualization-row" v-if="visualization !== 'coropletico' && visualization !== 'heatmap'">
                         <label for="sizeCriteria">Tamanho:</label>
                         <div class="select-wrapper">
                             <select id="sizeCriteria" v-model="size" @change="handleCriteriaChange">
@@ -192,13 +192,13 @@ export default defineComponent({
          */        const colorOptions = computed((): ColorOption[] => {            if (visualization.value === 'coropletico') {
                 return [
                     { value: 'verba', label: 'Valor Total' },
-                    { value: 'amount', label: 'Quantidade' },
+                    { value: 'amount', label: 'Quantidade de Projetos' },
                     { value: 'none', label: 'Nenhum' }
                 ];
             } else if (visualization.value === 'heatmap') {
                 return [
                     { value: 'verba', label: 'Valor Total' },
-                    { value: 'count', label: 'Densidade' }
+                    { value: 'count', label: 'Quantidade de Projetos' }
                 ];
             }else if (visualization.value === 'pontos') {
                 return [
