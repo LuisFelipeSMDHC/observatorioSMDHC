@@ -68,43 +68,29 @@ export default defineComponent({
          */
         const createHeatmapData = (parcerias: Parceria[]): [number, number, number][] => {
             const data: [number, number, number][] = [];
-            
-            // Get min and max values for intensity normalization
-            const values = parcerias.map(p => p[intensityCriteria.value as keyof Parceria] as number).filter(v => v && !isNaN(v));
-            
-            if (values.length === 0) return data;
-            
-            const minValue = Math.min(...values);
-            const maxValue = Math.max(...values);
-            
+            // For count, we don't need to extract values from parceria objects
+            let minValue = 0;
+            let maxValue = 1;
+            let valueRange = 1;
+            if (intensityCriteria.value !== 'count') {
+                // Get min and max values for intensity normalization only for non-count criteria
+                const values = parcerias.map(p => p[intensityCriteria.value as keyof Parceria] as number).filter(v => v && !isNaN(v));
+                if (values.length === 0) return data;
+                minValue = Math.min(...values);
+                maxValue = Math.max(...values);
+                valueRange = maxValue - minValue;
+            }
             parcerias.forEach(parceria => {
                 if (parceria.enderecos && parceria.enderecos.length > 0) {
                     parceria.enderecos.forEach(endereco => {
                         if (endereco.coords && endereco.coords.lat && endereco.coords.lng) {
-                            let intensity = 1; // Default intensity
-                            
-                            if (intensityCriteria.value === 'verba' && parceria.verba) {
-                                // Use logarithmic scale for better differentiation of monetary values
-                                const logMin = Math.log(Math.max(1, minValue));
-                                const logMax = Math.log(Math.max(1, maxValue));
-                                const logValue = Math.log(Math.max(1, parceria.verba));
-                                
-                                if (logMax > logMin) {
-                                    intensity = (logValue - logMin) / (logMax - logMin);
-                                } else {
-                                    intensity = 0.5;
-                                }
-                                
-                                // Apply intensity multiplier for higher contrast
-                                intensity = Math.pow(intensity, 0.7); // Makes mid-values more prominent
-                                
-                                // Ensure minimum visibility and maximum contrast
-                                intensity = Math.max(0.2, Math.min(1.0, intensity * 1.5));
-                            } else if (intensityCriteria.value === 'count') {
-                                // For count-based heatmap, use consistent higher intensity
-                                intensity = 0.8;
+                            let intensity = 0;
+                            if (intensityCriteria.value === 'count'){
+                                intensity = 1;
                             }
-                            
+                            else if (intensityCriteria.value === 'verba' && parceria.verba){
+                                intensity = ((parceria.verba - minValue) / valueRange) * 100; // Normalize to percentage
+                            }
                             data.push([
                                 endereco.coords.lat,
                                 endereco.coords.lng,
@@ -116,7 +102,7 @@ export default defineComponent({
             });
             
             return data;
-        };
+        }
 
         /**
          * Updates the heatmap layer with current data and settings
